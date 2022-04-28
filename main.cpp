@@ -1,18 +1,16 @@
 #include <iostream>
 #include <cstring>
-using TagName = const char*&;
-
-
+#define GET_VARIABLE_NAME(Variable) (#Variable)
+#define add_parameter(X)                               \
+   NamedParam X((const char*)GET_VARIABLE_NAME(X));    \
 //This class acts as a wrapper class for associating tag and data
-template<TagName Name, typename T>
+template<typename T>
 class named_value
 {
 public:
-    TagName name=Name;
+    const char* name;
     T value;
-    explicit named_value(TagName tag,T a)
-    {
-        value=a;
+    named_value(const char * name1, T a) : name(name1), value(a) {
     }
     T get_param()
     {
@@ -26,45 +24,37 @@ public:
 
 
 //This object is created during function call
-template<TagName Name>
 class NamedParam
 {
 public:
-    TagName tag = Name;
+    const char* tag;
+    explicit NamedParam(const char * tag) : tag(tag) {
+    }
     template<typename T>
     auto operator=(T value)
     {
-        return named_value<Name, decltype(value)>(tag,value);
+        return named_value<decltype(value)>(tag, value);
     }
 
 };
 
 
-char* str;
 //Function to associate name to value, from a list of variadic templates
 template<typename T>
-auto find(T x)
+auto find(const char* str,T x)
 {
     if(strcmp(x.get_name(),str)==0)
         return x.get_param();
     return 0;
 }
 template<typename T1,typename...T>
-auto find(T1 x,T... t)
+auto find(const char* str,T1 x,T... t)
 {
     if(strcmp(x.get_name(),str)==0)
         return x.get_param();
-    return find(t...);
+    return find(str,t...);
 }
 
-
-//Tag/variable declaration
-const char* _a="point";
-const char* _b="line";
-const char* _c="circle";
-NamedParam<_a> point;
-NamedParam<_b> line;
-NamedParam<_c> circle;
 
 //Function to be implemented
 void function_impl(int point, int line, int circle)
@@ -75,13 +65,10 @@ void function_impl(int point, int line, int circle)
 template<typename...T>
 void function(T... t)
 {
-    str="point";
-    auto point=find(t...);
-    str="line";
-    auto line=find(t...);
-    str="circle";
-    auto circle= find(t...);
-    function_impl(point,line,circle);
+    auto point_=find("point",t...);
+    auto line_=find("line",t...);
+    auto circle_= find("circle",t...);
+    function_impl(point_,line_,circle_);
 }
 
 /*Consider a function that takes 3 parameters and does certain arithmetic operations on it.
@@ -90,6 +77,9 @@ void function(T... t)
  */
 
 int main() {
+    add_parameter(point);
+    add_parameter(line);
+    add_parameter(circle);
     function(point=2,line=9,circle=3);
     function(line=9,circle=3,point=2);
 }
