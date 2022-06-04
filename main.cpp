@@ -1,5 +1,4 @@
 #include <iostream>
-#include<cstring>
 #define add_parameter(Tag, Name)  \
     struct Tag{};\
    NamedParam<Tag> Name;         \
